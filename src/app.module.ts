@@ -5,7 +5,8 @@ import { UsersModule } from './modules/users/users.module.js';
 import { RedisModule } from './integrations/redis/redis.module.js';
 import { MailModule } from './integrations/mail/mail.module.js';
 
-
+import { MiddlewareConsumer } from '@nestjs/common';
+import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware.js';
 
 @Module({
   imports: [
@@ -18,4 +19,9 @@ import { MailModule } from './integrations/mail/mail.module.js';
     UsersModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestLoggerMiddleware)
+      .forRoutes('*');
+  }}
