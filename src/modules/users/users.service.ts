@@ -13,6 +13,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { VerifyForgotPasswordOtpDto } from './dto/verify-forgot-password-otp.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
+import twilio from 'twilio';
 
 import { JwtService } from '@nestjs/jwt';
 
@@ -24,6 +25,11 @@ export class UsersService {
     private readonly mailService: MailService,
     private readonly jwtService: JwtService,
   ) {}
+
+  private readonly twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN,
+);
 
 
   async sendOtp(email: string) {
@@ -448,6 +454,30 @@ async resendOtp(userId: string) {
 
   return {
     message: 'OTP resent successfully to your registered email',
+  };
+}
+
+async sendSMS(userId: string, phoneNumber: string) {
+  const user = await this.prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!user) {
+    throw new BadRequestException('User not found');
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  await this.twilioClient.messages.create({
+    body: `Your verification OTP is ${otp}. It is valid for 10 minutes.`,
+    from: process.env.TWILIO_PHONE_NUMBER,
+    to: phoneNumber,
+  });
+
+  return {
+    message: 'OTP sent successfully to your phone number',
   };
 }
 

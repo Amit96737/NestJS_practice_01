@@ -8,6 +8,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { VerifyForgotPasswordOtpDto } from './dto/verify-forgot-password-otp.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
+import { SendSmsDto } from './dto/send-sms.dto.js';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
@@ -125,5 +126,19 @@ export class UsersController {
   resendOtp(@CurrentUser() user: any) {
     return this.usersService.resendOtp(user.sub);
   }
+
+
+@Post('send-sms')
+@ApiOperation({ summary: 'Send SMS OTP' })
+@UseGuards(AuthGuard)
+sendSMS(
+  @CurrentUser() user: any,
+  @Body() sendSmsDto: SendSmsDto,
+) {
+  return this.usersService.sendSMS(
+    user.sub,
+    sendSmsDto.phone_number,
+  );
+}
 
 }
