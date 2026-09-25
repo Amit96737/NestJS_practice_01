@@ -2,12 +2,13 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 import { CreateUserDto } from './dto/create-user.dto.js';
-
+import { CreateAdminDto } from './dto/create-admin.dto.js';
 import { PrismaService } from '../../database/prisma/prisma.service.js';
 import { RedisService } from '../../integrations/redis/redis.service.js';
 import { MailService } from '../../integrations/mail/mail.service.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { AdminLoginDto } from './dto/admin-login.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { VerifyForgotPasswordOtpDto } from './dto/verify-forgot-password-otp.dto.js';
@@ -88,6 +89,47 @@ export class UsersService {
 
     return {
       message: 'User created successfully, OTP send register email address please verify your account first',
+      data: userWithoutPassword,
+    };
+  }
+
+
+  
+  async createAdmin(CreateAdminDto: CreateAdminDto) {
+  const existingUser = await this.prisma.admin.findUnique({
+  where: {
+    email: CreateAdminDto.email,
+  },
+  });
+
+  if (existingUser) {
+      return {
+        message:
+          'Account with this email already exists.',
+        
+      };
+    }  
+
+
+    // await this.sendOtp(createUserDto.email);
+
+    const hashedPassword = await bcrypt.hash(
+      CreateAdminDto.password,
+      10,
+    );
+
+    const user = await this.prisma.admin.create({
+      data: {
+        user_name: CreateAdminDto.user_name,
+        email: CreateAdminDto.email,
+        password: hashedPassword,
+      },
+    });
+
+    const { password, ...userWithoutPassword } = user;
+
+    return {
+      message: 'Admin created successfully.',
       data: userWithoutPassword,
     };
   }
@@ -175,6 +217,48 @@ async signIn(loginDto: LoginDto) {
 
 
   const { password: _, ...userWithoutPassword } = user;
+
+  return {
+    message: 'Sign in successful',
+    data: userWithoutPassword,
+    token,
+  };
+}
+
+
+async signInAdmin(AdminLoginDto: AdminLoginDto) {
+  const { email, password } = AdminLoginDto;
+
+  const admin = await this.prisma.admin.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!admin) {
+    return {
+      message: 'Invalid email',
+    };
+  }
+
+  const passwordMatch = await bcrypt.compare(
+    password,
+    admin.password,
+  );
+
+  if (!passwordMatch) {
+    return {
+      message: 'Invalid password',
+    };
+  }
+
+  const token = await this.jwtService.signAsync({
+    sub: admin.id,
+    email: admin.email,
+  });
+
+
+  const { password: _, ...userWithoutPassword } = admin;
 
   return {
     message: 'Sign in successful',

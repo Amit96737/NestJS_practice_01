@@ -19,12 +19,16 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Nest Practice Project API')
-    .setDescription('API documentation for NestJS practice project')
+    .setDescription('API documentation for NestJS practice')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  // const document = SwaggerModule.createDocument(app, config);
+    const document = SwaggerModule.createDocument(app, config, {
+  autoTagControllers: false,
+});
+
 
   SwaggerModule.setup('api/docs', app, document);
 

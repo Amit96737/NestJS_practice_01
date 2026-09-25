@@ -17,5 +17,19 @@ model User {
   email_verified Boolean  @default(false)
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
-  is_superuser   Boolean  @default(false)
 }
+
+model Admin {
+  id             String   @id @default(uuid())  @db.Uuid
+  user_name      String   @unique
+  email          String   @unique
+  status         Boolean  @default(true)
+  is_superuser   Boolean  @default(true)
+  password       String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+}
+
+// model Item {
+
+// }
